@@ -7,15 +7,34 @@ fn main() {
 }
 
 fn add_n(v: Vec<i32>, n: i32) -> Vec<i32> {
-    unimplemented!()
+    // takes ownership of v
+    // .iter(): iterates over the vector
+    // .map(): applies a function to each element
+    // .collect(): collects the results into a new vector
+    // |x|: lambda function that takes x as an argument
+
+    v.iter().map(|x| x + n).collect()
 }
 
 fn add_n_inplace(v: &mut Vec<i32>, n: i32) {
-    unimplemented!()
+    // takes mutable reference to v
+    // .iter_mut(): iterates over the vector mutably
+    // *x : deferences x to modify the value
+
+    for x in v.iter_mut() {
+        *x += n;
+    }
+
 }
 
 fn dedup(v: &mut Vec<i32>) {
-    unimplemented!()
+    // hashset: remove duplicates IN-PLACE
+    // .retain(): retains elements if the closure returns true
+    // seen.insert(*x): HashSet::insert returns false if the value is already in the set
+    // v.retain(): retains elements if the closure returns true
+
+    let mut seen = HashSet::new();
+    v.retain(|x| seen.insert(*x));
 }
 
 #[cfg(test)]
