@@ -45,10 +45,12 @@ impl LinkedList {
 }
 
 
+// Display trait: define how linked list should be when
+// using the {} placehodler
 impl fmt::Display for LinkedList {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut current: &Option<Box<Node>> = &self.head;
-        let mut result = String::new();
+        let mut result = String::new(); // Accmuluate the string
         loop {
             match current {
                 Some(node) => {
@@ -62,10 +64,13 @@ impl fmt::Display for LinkedList {
     }
 }
 
+// Drop trait: define custom cleanup logic when an object 
+// goes out of scope (default Drop: recursive call)
 impl Drop for LinkedList {
     fn drop(&mut self) {
         let mut current = self.head.take();
         while let Some(mut node) = current {
+            // take(): take ownership of the node, leaving none
             current = node.next.take();
         }
     }
