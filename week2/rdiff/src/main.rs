@@ -31,8 +31,7 @@ fn lcs(seq1: &Vec<String>, seq2: &Vec<String>) -> Grid {
     // Inclusive on left, exclusive on right
     let mut grid = Grid::new(m + 1, n + 1);
 
-    // unwrap(): extract successful values on types
-    // like Option<T> or Result<T, E>
+    // unwrap(): extract successful values on types like Option<T> or Result<T, E>
     for i in 0..m + 1 {
         grid.set(i, 0, 0).unwrap();
     }
@@ -62,7 +61,7 @@ fn print_diff(lcs_table: &Grid, lines1: &Vec<String>, lines2: &Vec<String>, i: u
     // Out of bound error without checking i > 0 and j > 0
     // let down = lcs_table.get(i, j - 1).unwrap();
     // let right = lcs_table.get(i - 1, j).unwrap();
-    
+
     if i > 0 && j > 0 && lines1[i - 1] == lines2[j - 1] {
         print_diff(lcs_table, lines1, lines2, i - 1, j - 1);
         println!(" {}", lines1[i - 1]); 
