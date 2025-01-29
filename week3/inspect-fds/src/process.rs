@@ -1,5 +1,4 @@
 use crate::open_file::OpenFile;
-#[allow(unused)] // TODO: delete this line for Milestone 3
 use std::fs;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,9 +15,17 @@ impl Process {
     }
 
     pub fn print(&self) {
-        let cmd_name = self.command.split_whitespace().next().unwrap_or("Unknown");
-        println!("=======  \"{}\" (pid: {} ppid: {}) =======", 
-        cmd_name, self.pid, self.ppid);
+        // MILESTONE 2
+        // let cmd_name = self.command.split_whitespace().next().unwrap_or("Unknown");
+        // println!("=======  \"{}\" (pid: {} ppid: {}) =======", 
+        // cmd_name, self.pid, self.ppid);
+
+        // MILESTONE 3
+        if let Some(fds) = self.list_fds() {
+            println!("Process {} has fds: {:?}", self.pid, fds);
+        } else {
+            println!("Process {} has no fds", self.pid);
+        }
     }
 
     /// This function returns a list of file descriptor numbers for this Process, if that
@@ -28,7 +35,31 @@ impl Process {
     /// descriptor table.)
   
     pub fn list_fds(&self) -> Option<Vec<usize>> {
-        
+
+        // Handle zombie process
+        let status_path = format!("/proc/{}/status", self.pid);
+        let status = std::fs::read_to_string(&status_path).ok()?;
+
+        if status.contains("State:\tZ") {
+            return None;
+        }
+
+        let path = format!("/proc/{}/fd", self.pid);
+
+        // fs::read_dir() -> Result<ReadDir, std::io::Error>
+        // ReadDir is an iterator over DirEntry
+        let entries = fs::read_dir(&path).ok()?;
+
+        // iterate the entries and parse them
+        let mut fds = Vec::new();
+        for entry in entries {
+            let entry = entry.ok()?;
+            let file_name = entry.file_name();
+            if let Ok(fd) = file_name.to_string_lossy().parse::<usize>() {
+                fds.push(fd);
+            }
+        }
+        Some(fds)
     }
 
     /// This function returns a list of (fdnumber, OpenFile) tuples, if file descriptor
@@ -43,6 +74,17 @@ impl Process {
         Some(open_files)
     }
 }
+
+// Note:
+// 1. Solution 1: close FDs
+// To pass the test when running this test under IDE terminal
+// Close the unnecessary file descriptors inherited from shell 
+// For example, the fds shows [1, 2, 4, 5, 19, 20, 21],
+// we need to close unnecessary fds: exec 19>&- 20>&- 21>&-
+// and then execute: cargo test list_fds
+//
+// 2. Solution 2: run under local terminal
+//
 
 #[cfg(test)]
 mod test {
@@ -59,6 +101,7 @@ mod test {
     fn test_list_fds() {
         let mut test_subprocess = start_c_program("./multi_pipe_test");
         let process = ps_utils::get_target("multi_pipe_test").unwrap().unwrap();
+
         assert_eq!(
             process
                 .list_fds()
@@ -71,11 +114,29 @@ mod test {
     #[test]
     fn test_list_fds_zombie() {
         let mut test_subprocess = start_c_program("./nothing");
+
         let process = ps_utils::get_target("nothing").unwrap().unwrap();
-        assert!(
-            process.list_fds().is_none(),
-            "Expected list_fds to return None for a zombie process"
-        );
+        // Read process state from /proc/{pid}/status
+        let status_path = format!("/proc/{}/status", process.pid);
+        let status = std::fs::read_to_string(&status_path).unwrap_or_default();
+
+        // Print process state for debugging
+        println!("Process State:\n{}", status);
+
+        // Check if process is marked as zombie (State: Z)
+        if status.contains("State:\tZ") {
+            assert!(
+                process.list_fds().is_none(),
+                "I Expected list_fds to return None for a zombie process"
+            );
+        } else {
+            panic!("Process was not a zombie when checked");
+        }
+
+        // assert!(
+        //     process.list_fds().is_none(),
+        //     "Expected list_fds to return None for a zombie process"
+        // );
         let _ = test_subprocess.kill();
     }
 }

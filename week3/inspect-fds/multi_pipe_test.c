@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
+#include <stdio.h>
 
 int main() {
     int fds1[2];
@@ -15,10 +16,13 @@ int main() {
         close(fds2[0]);
         close(fds2[1]);
         sleep(2);
+
         return 0;
     }
+
     close(fds1[0]);
     close(fds2[1]);
+
     waitpid(pid, NULL, 0);
     return 0;
 }

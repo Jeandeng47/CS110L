@@ -4,7 +4,6 @@ mod open_file;
 mod process;
 mod ps_utils;
 
-use std::process::exit; // import exit
 use ps_utils::get_target; // import get_target
 
 fn main() {
