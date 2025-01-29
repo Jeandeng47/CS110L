@@ -4,18 +4,47 @@ mod open_file;
 mod process;
 mod ps_utils;
 
+use std::process::exit; // import exit
+use ps_utils::get_target; // import get_target
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         println!("Usage: {} <name or pid of target>", args[0]);
         std::process::exit(1);
     }
-    #[allow(unused)] // TODO: delete this line for Milestone 1
+    
     let target = &args[1];
+    match get_target(target) {
+        // If encounter an error, presents error msg and exits
+        Err(err) => {
+            eprintln!("Error occurred while searching for the target process: {}", err);
+            std::process::exit(1);
+        }
 
-    // TODO: Milestone 1: Get the target Process using psutils::get_target()
-    unimplemented!();
+        // If no matching process, exit
+        Ok(None) => {
+            eprintln!("No matching process found for target: {}", target);
+            std::process::exit(1);
+        }
+
+        // If a process is found, print its PID
+        Ok(Some(process)) => {
+            process.print();
+        }
+    }
+    
 }
+
+// $ cargo run bash
+// Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.01s
+// Running `target/debug/inspect-fds bash`
+// Found process with PID: 779
+
+// $ cargo run non-exist
+// Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.01s
+// Running `target/debug/inspect-fds non-exist`
+// No matching process found for target: non-exist
 
 #[cfg(test)]
 mod test {
