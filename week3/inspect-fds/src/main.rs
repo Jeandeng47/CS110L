@@ -30,6 +30,12 @@ fn main() {
         // If a process is found, print its PID
         Ok(Some(process)) => {
             process.print();
+            let child_processes = 
+                ps_utils::get_child_processes(process.pid)
+                .expect("Failed to get child processes.");
+            for child in child_processes {
+                child.print();
+            }
         }
     }
     

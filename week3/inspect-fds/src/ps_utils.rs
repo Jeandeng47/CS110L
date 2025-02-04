@@ -55,16 +55,23 @@ fn parse_ps_line(line: &str) -> Result<Process, Error> {
     // ps doesn't output a very nice machine-readable output, so we do some wonky things here to
     // deal with variable amounts of whitespace.
     let mut remainder = line.trim();
+
     let first_token_end = remainder
         .find(char::is_whitespace)
         .ok_or(Error::OutputFormatError("Missing second column"))?;
+
     let pid = remainder[0..first_token_end].parse::<usize>()?;
+
     remainder = remainder[first_token_end..].trim_start();
+
     let second_token_end = remainder
         .find(char::is_whitespace)
         .ok_or(Error::OutputFormatError("Missing third column"))?;
+
     let ppid = remainder[0..second_token_end].parse::<usize>()?;
+
     remainder = remainder[second_token_end..].trim_start();
+
     Ok(Process::new(pid, ppid, String::from(remainder)))
 }
 
@@ -77,8 +84,12 @@ fn get_process(pid: usize) -> Result<Option<Process>, Error> {
     // fails, or if it returns non-utf-8 output. (The extra Error traits above are used to
     // automatically convert errors like std::io::Error or std::string::FromUtf8Error into our
     // custom error type.)
+
+    // convert bytes to utf8 String
     let output = String::from_utf8(
+        // create a new shell cmd to run ps
         Command::new("ps")
+            // ps --pid <pid> -o pid= ppid= command=
             .args(&["--pid", &pid.to_string(), "-o", "pid= ppid= command="])
             .output()?
             .stdout,
@@ -96,7 +107,7 @@ fn get_process(pid: usize) -> Result<Option<Process>, Error> {
 /// This function takes a pid and returns a list of Process structs for processes that have the
 /// specified pid as their parent process. An Error is returned if ps cannot be executed or
 /// produces unexpected output format.
-#[allow(unused)] // TODO: delete this line for Milestone 5
+
 pub fn get_child_processes(pid: usize) -> Result<Vec<Process>, Error> {
     let ps_output = Command::new("ps")
         .args(&["--ppid", &pid.to_string(), "-o", "pid= ppid= command="])

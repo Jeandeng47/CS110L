@@ -16,15 +16,36 @@ impl Process {
 
     pub fn print(&self) {
         // MILESTONE 2
-        // let cmd_name = self.command.split_whitespace().next().unwrap_or("Unknown");
-        // println!("=======  \"{}\" (pid: {} ppid: {}) =======", 
-        // cmd_name, self.pid, self.ppid);
+        let cmd_name = self.command.split_whitespace().next().unwrap_or("Unknown");
+        println!("=======  \"{}\" (pid: {} ppid: {}) =======", 
+        cmd_name, self.pid, self.ppid);
 
         // MILESTONE 3
-        if let Some(fds) = self.list_fds() {
-            println!("Process {} has fds: {:?}", self.pid, fds);
-        } else {
-            println!("Process {} has no fds", self.pid);
+        // if let Some(fds) = self.list_fds() {
+        //     println!("Process {} has fds: {:?}", self.pid, fds);
+        // } else {
+        //     println!("Process {} has no fds", self.pid);
+        // }
+
+        // MILESTONE 4
+        match self.list_open_files() {
+            None => println!(
+                "Warning: could not inspect file descriptors for this process! \
+                It might have exited just as we were about to look at its fd table, \
+                or it might have exited a while ago and is waiting for the parent \
+                to reap it."
+            ),
+            Some(open_files) => {
+                for (fd, file) in open_files {
+                    println!(
+                        "{:<4} {:<15} cursor: {:<4} {}",
+                        fd,
+                        format!("({})", file.access_mode),
+                        file.cursor,
+                        file.colorized_name(),
+                    );
+                }
+            }
         }
     }
 
@@ -65,7 +86,7 @@ impl Process {
     /// This function returns a list of (fdnumber, OpenFile) tuples, if file descriptor
     /// information is available (it returns None otherwise). The information is commonly
     /// unavailable if the process has already exited.
-    #[allow(unused)] // TODO: delete this line for Milestone 4
+ 
     pub fn list_open_files(&self) -> Option<Vec<(usize, OpenFile)>> {
         let mut open_files = vec![];
         for fd in self.list_fds()? {
@@ -133,10 +154,10 @@ mod test {
             panic!("Process was not a zombie when checked");
         }
 
-        // assert!(
-        //     process.list_fds().is_none(),
-        //     "Expected list_fds to return None for a zombie process"
-        // );
+        assert!(
+            process.list_fds().is_none(),
+            "Expected list_fds to return None for a zombie process"
+        );
         let _ = test_subprocess.kill();
     }
 }
